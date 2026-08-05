@@ -1,98 +1,116 @@
-# Guía de Customización de Arch Linux (mi setup)
+# Arch Linux Customization Guide (my setup)
 
-Guía hecha a la medida de **mi** stack — Arch + Omarchy + Hyprland + Kitty + matugen.
-No es una guía genérica de Arch: cada sección refleja lo que **realmente** corre en esta máquina.
+How my machine is put together: Arch + Omarchy as the base, JaKooLit's Hyprland dots layered
+on top, and Matugen regenerating every colour in the system from whatever wallpaper is up.
 
-> **Filosofía:** el wallpaper manda. Todo lo demás (colores de terminal, waybar, hyprland borders, rofi, gtk, helium, spotify) se regenera automáticamente desde la imagen actual con `matugen`. No toco temas a mano: cambio wallpaper → todo el desktop cambia.
+This is a description of a working setup, not an install script. Read it, steal the parts you
+like.
 
 ---
 
-## 0. Stack actual (resumen de un vistazo)
+## 0. Current stack at a glance
 
-| Pieza            | Programa                          | Config                                            |
-|------------------|-----------------------------------|---------------------------------------------------|
-| Distro base      | Arch Linux (rolling) + Omarchy    | `/etc/os-release`, `~/.local/share/omarchy/`      |
-| Compositor       | Hyprland                          | `~/.config/hypr/`                                 |
-| Barra            | Waybar                            | `~/.config/waybar/`                               |
-| Terminal         | Kitty                             | `~/.config/kitty/`                                |
-| Shell + prompt   | Bash + Starship                   | `~/.bashrc`, `~/.config/starship.toml`            |
-| Launcher 1       | Rofi (drun, wallpaper picker)     | `~/.config/rofi/`                                 |
-| Launcher 2       | Walker (Win+K menú)               | `~/.config/walker/`                               |
-| Tema dinámico    | Matugen (Material You)            | `~/.config/matugen/config.toml`                   |
-| Wallpaper        | swww                              | `~/.config/hypr/current_wallpaper` (symlink)      |
-| Notificaciones   | swaync                            | `~/.config/swaync/`                               |
-| Lock / Idle      | Hyprlock + Hypridle               | `~/.config/hypr/hyprlock.conf`, `hypridle.conf`   |
-| OSD volumen/brillo | SwayOSD                         | `~/.config/swayosd/`                              |
-| File manager GUI | Nautilus                          | —                                                 |
-| File manager TUI | Yazi (`SUPER+SHIFT+E`)            | `~/.config/yazi/`                                 |
-| Editor           | Neovim (LazyVim)                  | `~/.config/nvim/`                                 |
-| Git / Docker TUI | Lazygit, Lazydocker               | `~/.config/lazygit/`, `~/.config/lazydocker/`     |
-| Monitoreo        | btop, fastfetch                   | `~/.config/btop/`, `~/.config/fastfetch/`         |
-| Runtime manager  | mise                              | `~/.config/mise/`                                 |
-| AUR helper       | yay                               | —                                                 |
+| Piece                | Program                            | Config                                              |
+|----------------------|------------------------------------|-----------------------------------------------------|
+| Base distro          | Arch Linux (rolling) + Omarchy 3.8 | `/etc/os-release`, `~/.local/share/omarchy/`         |
+| Compositor           | Hyprland                           | `~/.config/hypr/`                                    |
+| Bar                  | Waybar (JaKooLit layouts)          | `~/.config/waybar/`                                  |
+| Terminal             | Kitty                              | `~/.config/kitty/`                                   |
+| Shell + prompt       | Bash + Starship                    | `~/.bashrc`, `~/.config/starship.toml`               |
+| Multiplexer          | tmux                               | `~/.config/tmux/tmux.conf`                           |
+| Launcher             | Rofi (drun + wallpaper picker)     | `~/.config/rofi/`                                    |
+| Dynamic theming      | Matugen (Material You)             | `~/.config/matugen/config.toml`                      |
+| Wallpaper            | swww                               | `~/.config/hypr/current_wallpaper` (symlink)         |
+| Notifications        | swaync                             | `~/.config/swaync/`                                  |
+| Lock / idle          | Hyprlock + Hypridle                | `~/.config/hypr/hyprlock.conf`, `hypridle.conf`      |
+| Volume/brightness OSD| SwayOSD                            | `~/.config/swayosd/`                                 |
+| GUI file manager     | Nautilus                           | —                                                    |
+| Editor               | Neovim (LazyVim)                   | `~/.config/nvim/`                                    |
+| Git / Docker TUIs    | Lazygit, Lazydocker                | `~/.config/lazygit/`, `~/.config/lazydocker/`        |
+| Monitoring           | btop, fastfetch                    | `~/.config/btop/`, `~/.config/fastfetch/`            |
+| Runtime manager      | mise                               | `~/.config/mise/`                                    |
+| AUR helper           | yay                                | —                                                    |
+| Browser              | Helium                             | `~/.config/net.imput.helium/`                        |
 
-Monitores: **eDP-1** (laptop, workspaces 1-5) + **HDMI-A-1** (externo, workspaces 6-10).
+Shell tooling: `zoxide`, `fzf`, `eza`, `bat`, `ripgrep`, `fd` — all wired up by Omarchy's
+bash defaults.
+
+Monitors: **HDMI-A-1** (external, 1366x768, workspaces 6-10) at `0x0`, **eDP-1** (laptop,
+1366x768, workspaces 1-5) at `1366x0`.
 
 ---
 
 ## 1. Base: Arch + Omarchy
 
-Omarchy = una distro encima de Arch que pre-arma Hyprland + Waybar + Rofi + ergonomía. Mis bashrc, defaults y muchos scripts vienen de `~/.local/share/omarchy/default/`.
+[Omarchy](https://omarchy.org/) is an opinionated Arch layer that pre-assembles Hyprland,
+Waybar, a launcher and a pile of ergonomics. My bashrc sources its defaults:
 
-```bash
-# El bashrc sourcea los defaults de Omarchy:
+```sh
+# ~/.bashrc
 source ~/.local/share/omarchy/default/bash/rc
 ```
 
-**Regla #1 (mía):** NO usar `omarchy theme set <name>`.
-Cicla el wallpaper, mata el palette de matugen y deja un `swaybg` pintando encima del de `swww`. Ya eliminé `~/.config/omarchy/{current,themes,themed}` por esto. El theming va 100% por matugen.
+That single line brings in envs, aliases, functions and `init` — which is what actually
+activates mise, Starship, zoxide and fzf. Anything I add goes *after* it:
 
-Para actualizar el sistema:
-
-```bash
-yay -Syu          # Arch + AUR en un solo comando
-sudo pacman -Syu  # Solo repos oficiales
+```sh
+# Flutter SDK
+export PATH="$HOME/development/flutter/bin:$PATH"
+# Rust / cargo-installed binaries (deepsearch, etc.)
+export PATH="$HOME/.cargo/bin:$PATH"
 ```
+
+**Never edit `~/.local/share/omarchy/`** — it is git-managed and `omarchy update` will
+clobber you. Override in `~/.config/` instead.
+
+Useful commands: `omarchy commands`, `omarchy update`, `omarchy refresh <app>`,
+`omarchy restart <app>`.
+
+### A note on the hybrid
+
+Omarchy ships its own Hyprland and Waybar configs. I replaced most of them with
+[JaKooLit's Hyprland-Dots](https://github.com/JaKooLit/Hyprland-Dots), which is where the
+`~/.config/hypr/configs/` split and the swappable Waybar layouts come from. The
+displaced Omarchy versions are still on disk as `*-omarchy-old` directories.
+
+What this means in practice: some `omarchy` commands no longer describe reality.
+`omarchy theme current` reports `Unknown`, because Matugen — not Omarchy's theme system —
+owns the colours.
 
 ---
 
-## 2. Hyprland (compositor)
+## 2. Hyprland
 
-### Estructura
+### Structure
 
-```
-~/.config/hypr/
-├── hyprland.conf          # entrypoint
-├── colors.conf            # generado por matugen — NO editar
-├── current_wallpaper      # symlink al wallpaper activo
-├── hypridle.conf
-├── hyprlock.conf
-├── configs/
-│   ├── input.conf
-│   ├── keybinds.conf
-│   ├── looknfeel.conf
-│   ├── tags.conf
-│   ├── UserAnimations.conf
-│   └── windowrules.conf
-└── scripts/               # mis scripts custom
-```
-
-### Monitores y workspaces
-
-En `hyprland.conf`:
+`~/.config/hypr/hyprland.conf` is a thin file that sources everything else:
 
 ```conf
-monitor = eDP-1, 1366x768@60, 1366x0, 1
-monitor = HDMI-A-1, 1366x768@59.79, 0x0, 1
-monitor = , preferred, auto, 1   # cualquier otro = auto
-
-# Workspaces 1-5 en laptop, 6-10 en monitor externo
-workspace = 1, monitor:eDP-1, default:true
-workspace = 6, monitor:HDMI-A-1, default:true
-# ... etc
+source = colors.conf                              # generated by matugen
+source = ~/.config/hypr/configs/tags.conf
+source = ~/.config/hypr/configs/looknfeel.conf
+source = ~/.config/hypr/configs/UserAnimations.conf
+source = ~/.config/hypr/configs/windowrules.conf
+source = ~/.config/hypr/configs/input.conf
+source = ~/.config/hypr/configs/keybinds.conf
+source = ~/.config/hypr/configs/numlock-submap.conf
 ```
 
-### Autostart (lo que arranca con la sesión)
+Helper scripts live in `~/.config/hypr/scripts/` — volume, brightness, screenshot, the
+wallpaper picker, and the Waybar layout/style switchers.
+
+### Monitors and workspaces
+
+```conf
+monitor = HDMI-A-1, 1366x768@59.79, 0x0, 1
+monitor = eDP-1, 1366x768@60, 1366x0, 1
+monitor = , preferred, auto, 1
+
+workspace = 1, monitor:eDP-1, default:true        # 1-5 on the laptop
+workspace = 6, monitor:HDMI-A-1, default:true     # 6-10 on the external
+```
+
+### Autostart
 
 ```conf
 exec-once = nm-applet
@@ -104,81 +122,99 @@ exec-once = systemctl --user start hyprpolkitagent
 exec-once = hypridle
 ```
 
-### Variables de programas
+### Programs
 
 ```conf
 $terminal    = kitty
 $fileManager = nautilus
 $menu        = rofi -show drun
-$mainMod     = SUPER
 ```
 
-### Keybinds (los que más uso — `~/.config/hypr/configs/keybinds.conf`)
+### Keybinds (`~/.config/hypr/configs/keybinds.conf`)
 
-| Combo                 | Acción                                         |
-|-----------------------|------------------------------------------------|
-| `SUPER + Return`      | Abrir Kitty                                    |
-| `SUPER + W`           | Cerrar ventana                                 |
-| `SUPER + SHIFT + W`   | Matar proceso de la ventana activa             |
-| `SUPER + SPACE`       | Rofi drun                                      |
-| `SUPER + K`           | Walker (menú general)                          |
-| `SUPER + Q`           | **Wallpaper picker** (rofi + matugen)          |
-| `SUPER + E`           | Nautilus                                       |
-| `SUPER + SHIFT + E`   | Yazi (kitty)                                   |
-| `SUPER + L`           | Lock (hyprlock)                                |
-| `SUPER + R`           | Reiniciar waybar                               |
-| `SUPER + SHIFT + S`   | Screenshot                                     |
-| `SUPER + P`           | Color picker (hyprpicker)                      |
-| `SUPER + T`           | Toggle floating                                |
-| `SUPER + SHIFT + F`   | Fullscreen                                     |
-| `SUPER + BACKSPACE`   | Toggle transparencia ventanas                  |
-| `SUPER + H`           | Hide/show waybar                               |
-| `SUPER + CTRL + B`    | Menú de estilos de waybar                      |
-| `SUPER + ALT + B`     | Menú de layouts de waybar                      |
-| `SUPER + flechas`     | Mover focus                                    |
-| `SUPER + SHIFT + flechas` | Mover ventana                              |
-| `SUPER + 1..0`        | Cambiar workspace                              |
-| `SUPER + SHIFT + 1..0`| Enviar ventana a workspace                     |
-| `CTRL + ALT + Delete` | Salir de Hyprland                              |
+| Combo                      | Action                                  |
+|----------------------------|-----------------------------------------|
+| `SUPER + Return`           | Kitty                                   |
+| `SUPER + SHIFT + Return`   | Default browser                         |
+| `SUPER + W`                | Close window                            |
+| `SUPER + SHIFT + W`        | Kill the active window's process        |
+| `SUPER + SPACE`            | Rofi drun                               |
+| `SUPER + Q`                | **Wallpaper picker** (rofi + matugen)   |
+| `SUPER + K`                | Show keybindings cheat sheet            |
+| `SUPER + E`                | Nautilus                                |
+| `SUPER + L`                | Lock (hyprlock)                         |
+| `SUPER + R`                | Restart waybar                          |
+| `SUPER + H`                | Hide / show waybar                      |
+| `SUPER + SHIFT + S`        | Screenshot                              |
+| `SUPER + CTRL + S`         | Screen recording menu                   |
+| `SUPER + P`                | Colour picker (hyprpicker)              |
+| `SUPER + T`                | Toggle floating                         |
+| `SUPER + SHIFT + F`        | Fullscreen                              |
+| `SUPER + J`                | Toggle split (dwindle)                  |
+| `SUPER + BACKSPACE`        | Toggle window transparency              |
+| `SUPER + SHIFT + I`        | Toggle lock-when-idle                   |
+| `SUPER + CTRL + B`         | Waybar style menu                       |
+| `SUPER + ALT + B`          | Waybar layout menu                      |
+| `SUPER + C` / `SUPER + V`  | Universal copy / paste                  |
+| `SUPER + arrows`           | Move focus                              |
+| `SUPER + CTRL + arrows`    | Move window                             |
+| `SUPER + SHIFT + arrows`   | Resize window                           |
+| `SUPER + 1..0`             | Switch workspace                        |
+| `SUPER + SHIFT + 1..0`     | Send window to workspace                |
+| `CTRL + ALT + Delete`      | Exit Hyprland                           |
 
-Para cambiar un keybind: editar `~/.config/hypr/configs/keybinds.conf` y recargar con `hyprctl reload` (o `SUPER + R` que reinicia waybar pero hyprland se recarga solo al guardar si lo configurás así).
+Hyprland reloads on save; `hyprctl reload` forces it and `hyprctl configerrors` tells you
+what you broke.
 
-### Reglas de ventanas
+### Window rules
 
-`~/.config/hypr/configs/windowrules.conf` — útil para mandar apps a workspaces fijos, hacerlas flotantes, transparencia, etc.
+`~/.config/hypr/configs/windowrules.conf` — floating, workspace pinning, opacity.
+Hyprland's window-rule syntax changes between releases, so check the wiki before writing
+new ones rather than copying old snippets.
+
+### Look and feel
+
+`~/.config/hypr/configs/looknfeel.conf`:
 
 ```conf
-# Ejemplo
-windowrulev2 = float, class:^(pavucontrol)$
-windowrulev2 = workspace 2, class:^(Brave-browser)$
+general {
+    gaps_in = 5
+    gaps_out = 10
+    border_size = 2
+    col.active_border = $outline              # from colors.conf — do not hardcode
+    layout = dwindle
+}
+
+decoration {
+    rounding = 10
+    active_opacity = 0.92
+    inactive_opacity = 0.80
+    blur { enabled = true; size = 5; passes = 3; xray = true }
+}
 ```
 
-### Look & feel
-
-`~/.config/hypr/configs/looknfeel.conf` — gaps, borders, blur, rounding. Los **colores** de los borders vienen de `colors.conf` (matugen), así que no los hardcodees.
+Border colours come from Matugen via `colors.conf`. Hardcode a hex there and the next
+wallpaper change silently overwrites it.
 
 ---
 
-## 3. Waybar (barra)
+## 3. Waybar
+
+Config and stylesheet are **symlinks**, which is how the layout/style switchers work:
 
 ```
-~/.config/waybar/
-├── config            # JSON principal — qué módulos se muestran
-├── style.css         # estilos
-├── colors.css        # generado por matugen — NO editar
-├── Modules/          # módulos built-in
-├── ModulesCustom/    # mis módulos custom
-├── ModulesGroups/
-├── ModulesWorkspaces/
-└── UserModules/
+~/.config/waybar/config     -> configs/bintang default
+~/.config/waybar/style.css  -> style/bintang default.css
 ```
 
-- **Recargar:** `SUPER + R` (corre `~/.config/hypr/scripts/wbrestart.sh`).
-- **Hot-reload de colores:** matugen le manda `SIGUSR2` a waybar, recarga el CSS sin reiniciar.
-- **Esconder/mostrar:** `SUPER + H` (manda `SIGUSR1`).
-- **Cambiar layout o estilo:** `SUPER + ALT + B` y `SUPER + CTRL + B` (menús de Omarchy).
+- `~/.config/waybar/configs/` — alternative layouts (`bintang default`, `taskbar`,
+  `mpris middle`, `window middle`)
+- `~/.config/waybar/style/` — alternative stylesheets (`islands`, `full bar`, …)
+- `~/.config/waybar/Modules*` — module definitions, pulled in via `include`
+- `~/.config/waybar/colors.css` — **generated by Matugen, do not edit**
 
-Para añadir un módulo custom: crear archivo en `ModulesCustom/`, declararlo en `config`, estilarlo en `style.css` usando vars de `colors.css`.
+Switch with `SUPER + ALT + B` (layout) and `SUPER + CTRL + B` (style). Waybar does not
+auto-reload: `SUPER + R`, or `pkill -SIGUSR2 waybar` for a style-only refresh.
 
 ---
 
@@ -186,77 +222,45 @@ Para añadir un módulo custom: crear archivo en `ModulesCustom/`, declararlo en
 
 ### Kitty
 
-```
-~/.config/kitty/
-├── kitty.conf       # config principal
-└── colors.conf      # generado por matugen — NO editar
-```
-
-`kitty.conf` debería tener:
 ```conf
-include colors.conf
+font_family        JetBrainsMono NF Bold
+font_size          9.0
+background_opacity 0.9
+cursor_trail       1
+window_padding_width 4
+include            colors.conf        # generated by matugen
 ```
 
-Matugen, al regenerar `colors.conf`, manda `SIGUSR1` a kitty → recarga colores en vivo.
+### Starship
 
-**Trucos kitty que uso:**
-- `CTRL + SHIFT + Enter` — split horizontal
-- `CTRL + SHIFT + T` — nueva tab
-- `CTRL + SHIFT + L/H/J/K` — moverse entre splits
-- `CTRL + SHIFT + +/-` — zoom
+Deliberately minimal — directory, branch, status, and nothing else:
 
-### Bash + Starship
+```toml
+format = "[$directory$git_branch$git_status]($style)$character"
 
-`~/.bashrc` sourcea defaults de Omarchy. Para mis aliases/exports, agregar al final:
-
-```bash
-alias p='python'
-alias g='git'
-alias gst='git status'
-alias yz='yazi'
-alias lzg='lazygit'
-alias lzd='lazydocker'
-export EDITOR=nvim
+[character]
+success_symbol = "[❯](bold cyan)"
+error_symbol   = "[✗](bold cyan)"
 ```
 
-Prompt en `~/.config/starship.toml` — minimal cyan, muestra dir + git branch + status. Para tunearlo: <https://starship.rs/config/>.
+### tmux
 
-### Default terminal
-
-`~/.config/xdg-terminals.list` apunta a kitty.
+```conf
+set -g prefix C-Space          # Ctrl+Space, with Ctrl+b kept as a fallback
+setw -g mode-keys vi
+bind h split-window -v -c "#{pane_current_path}"
+bind v split-window -h -c "#{pane_current_path}"
+bind q source-file ~/.config/tmux/tmux.conf \; display "Configuration reloaded"
+```
 
 ---
 
-## 5. Launchers: Rofi + Walker
+## 5. Matugen — the heart of the setup
 
-### Rofi (`SUPER + SPACE` para apps, base del wallpaper picker)
+One wallpaper in, a full Material You palette out, written into every app that has a
+template.
 
-```
-~/.config/rofi/
-├── config.rasi
-├── colors.rasi      # generado por matugen — NO editar
-└── (themes...)
-```
-
-`config.rasi` debe `@import "colors.rasi"` para usar el palette.
-
-Modos útiles:
-- `rofi -show drun` — apps
-- `rofi -show run` — comandos
-- `rofi -show window` — switcher de ventanas
-- `rofi -dmenu` — modo pipe (es lo que usa `wppicker.sh`)
-
-### Walker (`SUPER + K`)
-
-Menú estilo Spotlight más moderno que rofi. Theme actual en `~/.config/walker/themes/omarchy-solid/`. El CSS importa `colors.css` (matugen lo regenera) — por eso ya no depende del theme overlay de Omarchy.
-
----
-
-## 6. Theming dinámico con Matugen (el corazón del setup)
-
-`matugen` toma una imagen → extrae paleta Material You → renderiza templates → ejecuta post-hooks para recargar apps en vivo.
-
-### Config: `~/.config/matugen/config.toml`
+`~/.config/matugen/config.toml`:
 
 ```toml
 [config.wallpaper]
@@ -277,222 +281,128 @@ post_hook   = "kill -SIGUSR1 $(pidof kitty)"
 input_path  = '~/.config/matugen/templates/hyprland-colors.conf'
 output_path = '~/.config/hypr/colors.conf'
 post_hook   = 'hyprctl reload'
-
-# + gtk3, gtk4, rofi, cava, spicetify, walker, swayosd, btop, helium, vscode, discord, etc.
 ```
 
-### Templates (`~/.config/matugen/templates/`)
+…plus gtk3, gtk4, rofi, cava, spicetify, walker, swayosd, btop and others.
 
-Cada template usa sintaxis tipo Jinja con `{{ colors.primary.default.hex }}`, `{{ colors.surface.default.hex }}`, etc. Lista de vars: <https://github.com/InioX/matugen#templates>.
+Every `output_path` above is **generated**. Edit the template in
+`~/.config/matugen/templates/`, never the output.
 
-Para añadir una app nueva al sistema de theming:
+### The wallpaper picker (`SUPER + Q`)
 
-1. Crear template en `~/.config/matugen/templates/miapp-colors.conf`.
-2. Añadir entrada `[templates.miapp]` en `config.toml` con `input_path`, `output_path` y `post_hook` para recargar.
-3. Que la app `include`/`@import` el output.
-4. `matugen image ~/.config/hypr/current_wallpaper --prefer saturation` para regenerar.
+`~/.config/hypr/scripts/wppicker.sh`, in three steps:
 
-### El flujo del wallpaper picker (`SUPER + Q`)
+1. List `~/Pictures/wallpapers` newest-first and show it in Rofi with previews
+2. `matugen image "$SELECTED" --type scheme-neutral --prefer less-saturation`
+3. Matugen writes every template and fires the post-hooks — swww swaps the wallpaper,
+   Waybar and Kitty repaint, Hyprland reloads
 
-`~/.config/hypr/scripts/wppicker.sh`:
-
-```bash
-WALLPAPER_DIR="$HOME/Pictures/wallpapers"
-SYMLINK_PATH="$HOME/.config/hypr/current_wallpaper"
-
-# Rofi con preview, ordenado por nuevo
-SELECTED_WALL=$(for a in $(ls -t *.jpg *.png *.gif *.jpeg 2>/dev/null); do
-  echo -en "$a\0icon\x1f$a\n"
-done | rofi -dmenu -p "")
-
-matugen image "$WALLPAPER_DIR/$SELECTED_WALL" --prefer saturation
-ln -sf "$WALLPAPER_DIR/$SELECTED_WALL" "$SYMLINK_PATH"
-```
-
-`matugen` se encarga del `swww img` por el bloque `[config.wallpaper]`. Si lo querés a mano:
-
-```bash
-matugen image ~/Pictures/wallpapers/foo.jpg --prefer saturation \
-  && ln -sf ~/Pictures/wallpapers/foo.jpg ~/.config/hypr/current_wallpaper \
-  && swww img ~/Pictures/wallpapers/foo.jpg
-```
-
-### Caso especial: Helium / Chromium policy
-
-Helium (Chromium fork) lee `/etc/chromium/policies/managed/color.json` para `BrowserThemeColor`. Esa carpeta está `chmod 777` para que matugen pueda escribir sin sudo. Template: `helium-color.json`.
+One keystroke recolours the whole desktop.
 
 ---
 
-## 7. Notificaciones, Lock, Idle
+## 6. Notifications, lock, idle
 
-### swaync (`~/.config/swaync/`)
-Notificaciones + centro de control. Click en icono de campana de waybar abre el panel.
+- **swaync** (`~/.config/swaync/`) — notification daemon and control centre
+- **Hyprlock** (`SUPER + L`, via `scripts/hyprlock.sh`)
+- **SwayOSD** — volume and brightness overlays, driven by the `scripts/volume.sh` and
+  `scripts/brightness.sh` bindings
+- **Hypridle** (`~/.config/hypr/hypridle.conf`):
 
-### Hyprlock (`SUPER + L`)
-Lockscreen. Config en `~/.config/hypr/hyprlock.conf`. Background = `current_wallpaper`.
+| Timeout | Action                          |
+|---------|---------------------------------|
+| 2.5 min | Dim backlight to 10             |
+| 5 min   | Lock session                    |
+| 5.5 min | Screen off (dpms)               |
+| 30 min  | Suspend                         |
 
-### Hypridle (`~/.config/hypr/hypridle.conf`)
-Auto-lock + apagado de pantalla por inactividad. Toggle on/off con `SUPER + SHIFT + I`.
-
-### SwayOSD
-Notificaciones visuales para volumen, brillo, caps lock. Los scripts `volume.sh` y `brightness.sh` en `~/.config/hypr/scripts/` lo invocan.
-
-### Wlogout (`~/.config/wlogout/`)
-Menú de power (logout/reboot/shutdown). Invocado por `Wlogout.sh`.
-
----
-
-## 8. Apps "donde vivo"
-
-### Neovim (LazyVim)
-
-```
-~/.config/nvim/
-├── init.lua
-├── lazy-lock.json     # versiones fijas de plugins (commitear esto!)
-├── lazyvim.json
-└── lua/              # mi config
-```
-
-- Plugins se manejan con Lazy.nvim — `:Lazy` abre la UI.
-- LSP/Mason — `:Mason` para instalar servers.
-- Tu config personal va en `lua/config/` y `lua/plugins/`.
-
-### Yazi
-
-File manager TUI. `SUPER + SHIFT + E` abre `kitty yazi`. Atajos vim-like (`h/j/k/l`), `y` copiar, `x` cortar, `p` pegar, `dd` borrar, `space` seleccionar.
-
-### Lazygit / Lazydocker
-
-TUIs para git y docker. Solo correr `lazygit` o `lazydocker` en una terminal. Indispensables.
-
-### btop
-
-Monitor de sistema con buen UI. `btop` y listo. Tema viene de matugen (`btop.theme`).
-
-### fastfetch
-
-System info al estilo neofetch pero más rápido. Lo uso en welcome de terminal o on-demand: `fastfetch`.
-
-### mise
-
-Version manager universal (Node, Python, Ruby, Go, etc.):
-
-```bash
-mise use node@22       # en el proyecto actual
-mise use -g python@3.13
-mise ls                # ver instalados
-```
+`SUPER + SHIFT + I` toggles lock-on-idle when you are watching something.
 
 ---
 
-## 9. Paquetes: pacman + yay
+## 7. Where I live
 
-```bash
-# Repos oficiales
-sudo pacman -S <pkg>           # instalar
-sudo pacman -Rns <pkg>         # eliminar (con deps no usadas)
-sudo pacman -Ss <query>        # buscar
-sudo pacman -Syu               # actualizar
-
-# AUR
-yay -S <pkg>                   # instalar
-yay -Syu                       # actualizar todo (repos + AUR)
-yay -Yc                        # limpiar deps huérfanas
-
-# Listar
-pacman -Qq                     # todos
-pacman -Qqe                    # instalados explícitamente
-pacman -Qm                     # del AUR / foreign
-```
-
-**Buenas prácticas:**
-- Antes de instalar del AUR: leer el `PKGBUILD` (`yay -Ga <pkg>`).
-- `paccache -rk2` (de `pacman-contrib`) para limpiar cache vieja.
-- Si una actualización rompe algo, `/var/log/pacman.log` tiene la historia.
+- **Neovim (LazyVim)** — `~/.config/nvim/`, plugins pinned in `lazy-lock.json`
+- **Lazygit / Lazydocker** — git and container TUIs
+- **btop / fastfetch** — monitoring, both Matugen-themed
+- **mise** — runtimes; currently just Node 25
+- **deepsearch** — my own BM25 file search, installed with
+  `cargo install --git https://github.com/Juan-Miguel-alvarado/deepsearch`
 
 ---
 
-## 10. Workflow diario
+## 8. Recipes
 
-1. Abro laptop → Hyprland arranca → waybar/swww/swaync ya cargados.
-2. `SUPER + Return` → kitty con starship → directo a `~/Projects/algo`.
-3. `nvim .` o `lazygit` según necesidad.
-4. Aburrido del look? `SUPER + Q` → pico wallpaper → todo cambia en <1s.
-5. Cambiar workspace: `SUPER + 1..5` en laptop, `SUPER + 6..0` en monitor externo.
-6. Sleep: cerrar tapa o `SUPER + L` para lock manual.
+### Change one colour by hand
 
----
+Don't edit the generated file. Edit the matching template in
+`~/.config/matugen/templates/` and re-run `matugen image "$(readlink -f ~/.config/hypr/current_wallpaper)"`.
 
-## 11. Recetas rápidas (cómo modificar X sin romper Y)
+### Add a keybind
 
-### Quiero cambiar un color a mano (sin tocar wallpaper)
+Append to `~/.config/hypr/configs/keybinds.conf`, save, then `hyprctl configerrors`. If the
+key is already bound, `unbind` it first.
 
-NO. Si lo hacés a `colors.conf`/`colors.css`, el próximo `SUPER + Q` lo sobreescribe. En lugar de eso: editar el **template** correspondiente en `~/.config/matugen/templates/` y regenerar:
+### Add a waybar module
 
-```bash
-matugen image ~/.config/hypr/current_wallpaper --prefer saturation
-```
+Define it in `~/.config/waybar/UserModules`, add its name to the `modules-*` array of the
+active layout in `~/.config/waybar/configs/`, then `SUPER + R`.
 
-### Quiero añadir un keybind
+### Autostart something
 
-`~/.config/hypr/configs/keybinds.conf` → guardar → `hyprctl reload`.
+Add `exec-once = …` to the autostart block of `~/.config/hypr/hyprland.conf`.
 
-### Quiero añadir un módulo a waybar
+### Pin an app to a workspace
 
-1. Crear el módulo en `~/.config/waybar/ModulesCustom/`.
-2. Referenciarlo en `~/.config/waybar/config`.
-3. Estilarlo en `style.css` usando vars de `colors.css`.
-4. `SUPER + R` para reiniciar.
+Add a rule to `~/.config/hypr/configs/windowrules.conf`.
 
-### Quiero que una app arranque sola con la sesión
+### I broke something
 
-`exec-once = miapp` en `~/.config/hypr/hyprland.conf` (sección `### AUTOSTART ###`).
-
-### Quiero una app en un workspace fijo
-
-`windowrulev2 = workspace 3, class:^(MiApp)$` en `~/.config/hypr/configs/windowrules.conf`.
-Para saber la `class` exacta: `hyprctl clients` con la app abierta.
-
-### Rompí algo y no sé qué
-
-```bash
-journalctl --user -xe              # logs de la sesión
-hyprctl monitors                   # estado de monitores
-hyprctl clients                    # ventanas + clases
-cat ~/.cache/hyprland/hyprland.log # log de hyprland
-```
+`omarchy refresh <app>` restores Omarchy's default for that app, backing up your version
+first. Note that for Hyprland and Waybar this replaces the JaKooLit configs described here,
+not just your edits. Timestamped `.bak.*` files are scattered next to most configs, and the
+displaced `*-omarchy-old` directories are still there.
 
 ---
 
-## 12. Repos de referencia
+## 9. Known rough edges
 
-- Omarchy: <https://github.com/basecamp/omarchy>
-- Setup que quiero matchear: <https://github.com/binnewbs/arch-hyprland>
-- Matugen: <https://github.com/InioX/matugen>
-- Hyprland wiki: <https://wiki.hyprland.org/>
-- LazyVim: <https://www.lazyvim.org/>
+Things that are wrong in the config right now, kept here so I actually fix them:
+
+- **`SUPER + SHIFT + E` is broken.** It runs `kitty yazi`, but `yazi` is not installed.
+  Either `yay -S yazi` or drop the binding.
+- **Walker is running but unbound.** It starts with the session and has a themed config,
+  yet no keybinding launches it — `SUPER + K` now opens the keybindings cheat sheet.
+  Rofi does all the launching.
+- **Mako and swaync are both installed.** Only swaync is autostarted; the Mako config is
+  dead weight.
+- **Config backup litter.** Five `waybar.backup.*` directories, plus assorted `.bak.*`
+  files and three `*-omarchy-old` directories.
 
 ---
 
-## TL;DR cheat sheet
+## 10. Reference
+
+- [Omarchy](https://omarchy.org/) — the Arch layer underneath
+- [JaKooLit / Hyprland-Dots](https://github.com/JaKooLit/Hyprland-Dots) — where the Hyprland
+  and Waybar structure comes from
+- [Hyprland wiki](https://wiki.hyprland.org/) — the only trustworthy source for window-rule
+  syntax
+- [Matugen](https://github.com/InioX/matugen) — Material You colour generation
+
+---
+
+## TL;DR
 
 ```
 SUPER + Return        terminal
-SUPER + SPACE         rofi (apps)
-SUPER + K             walker
-SUPER + Q             wallpaper picker → rewthemes desktop
-SUPER + W             cerrar ventana
+SUPER + SPACE         launcher
+SUPER + Q             wallpaper picker -> recolours everything
+SUPER + K             keybindings cheat sheet
 SUPER + L             lock
-SUPER + 1..0          workspace
-SUPER + SHIFT + 1..0  mover ventana a workspace
-SUPER + R             reiniciar waybar
-SUPER + SHIFT + E     yazi
-SUPER + E             nautilus
-SUPER + P             color picker
-SUPER + H             toggle waybar
-SUPER + BACKSPACE     toggle transparencia
-CTRL + ALT + Delete   salir de Hyprland
+SUPER + R             restart waybar
+SUPER + ALT/CTRL + B  waybar layout / style
 ```
 
-**La regla de oro:** no edites archivos generados (`colors.*`). Editá templates o configs base. El wallpaper es la fuente de verdad del look.
+Generated files you must never edit by hand: `~/.config/hypr/colors.conf`,
+`~/.config/waybar/colors.css`, `~/.config/kitty/colors.conf`.
