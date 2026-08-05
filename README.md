@@ -1,4 +1,4 @@
-# Arch Linux Customization Guide (my setup)
+# Arch Linux Customization Guide (my setup).
 
 How my machine is put together: Arch + Omarchy as the base, JaKooLit's Hyprland dots layered
 on top, and Matugen regenerating every colour in the system from whatever wallpaper is up.
